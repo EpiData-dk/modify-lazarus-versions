@@ -23,7 +23,10 @@ if [[ -z "${GITHUB_TOKEN}" ]]; then
 fi
 
 # verbose, show everything
-set -ex
+if [ "TRUE" = ${VERBOSE^^} ]
+then
+    set -ex
+fi
 
 # IDEA
 # 1: Get the latest git tag
@@ -64,9 +67,9 @@ log=$(git log "${tag_commit}".."${head_commit}" --format=%B)
 printf "History:\n---\n%s\n---\n" "$log"
 
 case "$log" in
-    "#major"*) new=$(semver -i major "$tag");;
-    "#minor"*) new=$(semver -i minor "$tag");;
-    "#patch"*) new=$(semver -i patch "$tag");;
+    *"#major"*) new=$(semver -i major "$tag");;
+    *"#minor"*) new=$(semver -i minor "$tag");;
+    *"#patch"*) new=$(semver -i patch "$tag");;
     *)
         echo "No git commit bump set! Exiting";
         exit 1;;
