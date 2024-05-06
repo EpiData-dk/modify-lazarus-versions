@@ -1,15 +1,15 @@
 #!/bin/bash
 
-set -exo pipefail
+set -eo pipefail
 
 # config
 project_filename=${PROJECT_FILENAME:-project1.lpi}
 github_token=${GITHUB_TOKEN}
+dryrun=${DRY_RUN:-false}
 verbose=${VERBOSE:-false}
 
 # since https://github.blog/2022-04-12-git-security-vulnerability-announced/ runner uses?
 git config --global safe.directory "${GITHUB_WORKSPACE}"
-git config --global safe.directory /github/workspace
 git remote set-url origin "https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}"
 git config --global user.name "${GITHUB_ACTOR}"
 git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
@@ -25,6 +25,11 @@ if [[ -z "${GITHUB_TOKEN}" ]]; then
   MESSAGE='Missing env var "github_token: ${{ secrets.GITHUB_TOKEN }}".'
   echo -e "[ERROR] ${MESSAGE}"
   exit 1
+fi
+
+if ${verbose}
+then
+    set -x
 fi
 
 # IDEA
@@ -107,6 +112,7 @@ then
     build_path='.CONFIG.Package.Version."+@Build"'
 fi
 
+## This DOES modify the file, but it is newer commited to repo.
 # Set major version:
 yq e -p xml -o xml -i "$major_path = $major_version" $project_filename
 # Set minor version:
@@ -116,6 +122,10 @@ yq e -p xml -o xml -i "$revision_path = $revision_version" $project_filename
 # Set build numberor :
 yq e -p xml -o xml -i "$build_path = $build_number" $project_filename
 
+if ${dryrun}
+then
+    exit 0
+fi
 
 #####################
 # Step 4: Commit (amend) the changes back to the repo

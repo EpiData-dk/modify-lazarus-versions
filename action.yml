@@ -1,8 +1,21 @@
-name: 'Lazarus Project or Package version bumper'
-description: 'Bump the version of a Lazarus Project or Package'
+name: 'Lazarus Project/Package version bumper'
+description: 'Bump the version of a Lazarus Project or Package while also adding a git tag based on the commit message'
 author: 'Torsten Bonde Christiansen'
+input:
+  GITHUB_TOKEN:
+    description: Personal Access Token for GitHub for pushing the code
+    required: true
+    default: ""
+  PROJECT_FILENAME:
+    description: The filename containing the lazarus project/packages
+    required: true
+    default: "project1.lpi"
+  DRY_RUN:
+    description: Perform all collecting actions but do not update project/package file or tag the repo.
+    required: false
+    default: false
 runs:
-  using: 'docker'
+  using: docker
   image: 'Dockerfile'
 branding:
   icon: 'git-merge'  
