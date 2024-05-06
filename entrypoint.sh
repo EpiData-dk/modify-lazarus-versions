@@ -121,7 +121,7 @@ yq e -p xml -o xml -i "$build_path = $build_number" $project_filename
 # Step 4: Commit (amend) the changes back to the repo
 #####################
 branch=$(git symbolic-ref --short -q HEAD)
-git commit --amend -am "Automatically bumped version: ${new}"
+git commit --amend -am "Automatically bumped version: ${new}" -m "${log}"
 git push --force-with-lease origin ${branch}
 
 #####################
