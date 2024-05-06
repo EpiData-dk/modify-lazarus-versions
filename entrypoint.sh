@@ -122,10 +122,10 @@ yq e -p xml -o xml -i "$build_path = $build_number" $project_filename
 #####################
 branch=$(git symbolic-ref --short -q HEAD)
 git commit --amend -am "Automatically bumped version: ${new}"
-
+git push --force-with-lease origin ${branch}
 
 #####################
 # Step 5: Tag commit
 #####################
 git tag -f ${new}
-git push --force-with-lease origin ${branch}
+git push --tags
