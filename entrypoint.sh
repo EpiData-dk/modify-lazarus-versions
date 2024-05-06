@@ -63,7 +63,7 @@ fi
 #####################
 ## Step 2: bump the version of either patch, minor or major
 #####################
-log= $(git log "${tag_commit}".."${head_commit}" --format=%B))
+log=$(git log "${tag_commit}".."${head_commit}" --format=%B)
 printf "History:\n---\n%s\n---\n" "$log"
 
 case "$log" in
