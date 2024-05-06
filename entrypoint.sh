@@ -23,10 +23,7 @@ if [[ -z "${GITHUB_TOKEN}" ]]; then
 fi
 
 # verbose, show everything
-if $verbose
-then
-    set -x
-fi
+set -ex
 
 # IDEA
 # 1: Get the latest git tag
