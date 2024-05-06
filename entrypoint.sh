@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eo pipefail
+set -exo pipefail
 
 # config
 project_filename=${PROJECT_FILENAME:-project1.lpi}
@@ -8,7 +8,12 @@ github_token=${GITHUB_TOKEN}
 verbose=${VERBOSE:-false}
 
 # since https://github.blog/2022-04-12-git-security-vulnerability-announced/ runner uses?
-git config --global --add safe.directory /github/workspace
+git config --global safe.directory "${GITHUB_WORKSPACE}"
+git config --global safe.directory /github/workspace
+git remote set-url origin "https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}"
+git config --global user.name "${GITHUB_ACTOR}"
+git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
 cd "${GITHUB_WORKSPACE}/${source}" || exit 1
 
 echo "*** CONFIGURATION ***"
@@ -21,9 +26,6 @@ if [[ -z "${GITHUB_TOKEN}" ]]; then
   echo -e "[ERROR] ${MESSAGE}"
   exit 1
 fi
-
-# verbose, show everything
-set -ex
 
 # IDEA
 # 1: Get the latest git tag
@@ -119,10 +121,6 @@ yq e -p xml -o xml -i "$build_path = $build_number" $project_filename
 # Step 4: Commit (amend) the changes back to the repo
 #####################
 branch=$(git symbolic-ref --short -q HEAD)
-git remote set-url origin "https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@${INPUT_ORGANIZATION_DOMAIN}/${GITHUB_REPOSITORY}"
-git config --global user.name "${GITHUB_ACTOR}"
-git config --global user.email "${GITHUB_ACTOR}@users.noreply.${INPUT_ORGANIZATION_DOMAIN}"
-
 git commit --amend -am "Automatically bumped version: ${new}"
 
 
