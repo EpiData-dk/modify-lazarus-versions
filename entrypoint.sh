@@ -127,5 +127,5 @@ git push --force-with-lease origin ${branch}
 #####################
 # Step 5: Tag commit
 #####################
-git tag -f ${new}
+git tag -f "v${new}"
 git push --tags
