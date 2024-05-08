@@ -38,11 +38,19 @@ then
     set -x
 fi
 
-if [[ ! -f ${project_filenames} ]]; then
-    echo "Project/Package file(s) not found: ${project_filenames}"
+fnf_error=false
+for filename in ${project_filenames}
+do
+    if [[ ! -f ${filename} ]]; then
+        echo "Project/Package file(s) not found: ${filename}"
+        fnf_error=true
+    fi
+done
+
+if $fnf_error
+then
     exit 1
 fi
-
 
 
 # IDEA
