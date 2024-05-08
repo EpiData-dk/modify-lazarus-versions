@@ -131,7 +131,7 @@ fi
 # Step 4: Commit (amend) the changes back to the repo
 #####################
 branch=$(git symbolic-ref --short -q HEAD)
-git commit --amend -am "Automatically bumped version: ${new}" -m "${log}"
+git commit --amend -a -m "${log}" -m "Automatically bumped version: ${new}" 
 git push --force-with-lease origin ${branch}
 
 #####################
