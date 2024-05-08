@@ -116,6 +116,11 @@ setOutput "major_version" ${major_version}
 setOutput "minor_version" ${minor_version}
 setOutput "revision_version" ${revision_version}
 
+echo -e "New Versions:"
+echo -e " Major = ${major_version}"
+echo -e " Minor = ${minor_version}"
+echo -e " Revision =  ${revision_version}"
+
 #####################
 # Step 3: Update the lazarus project/package with the new version
 #####################
