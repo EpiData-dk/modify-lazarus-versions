@@ -6,8 +6,8 @@ input:
     description: Personal Access Token for GitHub for pushing the code
     required: true
     default: ""
-  PROJECT_FILENAME:
-    description: The filename containing the lazarus project/packages
+  PROJECT_FILENAMES:
+    description: The filename(s) containing the lazarus project/packages. Separate by spaces if more than one.
     required: true
     default: "project1.lpi"
   DRY_RUN:

@@ -7,7 +7,7 @@ setOutput() {
 }
 
 # config
-project_filename=${PROJECT_FILENAME:-"project1.lpi"}
+project_filenames=${PROJECT_FILENAMES:-"project1.lpi"}
 github_token=${GITHUB_TOKEN}
 dryrun=${DRY_RUN:-false}
 verbose=${VERBOSE:-false}
@@ -21,7 +21,9 @@ git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
 cd "${GITHUB_WORKSPACE}/${source}" || exit 1
 
 echo "*** CONFIGURATION ***"
-echo -e "PROJECT_FILENAME: ${project_filename}"
+echo -e "PROJECT_FILENAMES: ${project_filename}"
+echo -e "DRY_RUN: ${dryrun}"
+echo -e "VERBOSE: ${verbose}"
 
 # Require github_token
 if [[ -z "${GITHUB_TOKEN}" ]]; then
@@ -35,6 +37,13 @@ if ${verbose}
 then
     set -x
 fi
+
+if [[ ! -f ${project_filenames} ]]; then
+    echo "Project/Package file(s) not found: ${project_filenames}"
+    exit 1
+fi
+
+
 
 # IDEA
 # 1: Get the latest git tag
@@ -75,11 +84,15 @@ log=$(git log "${tag_commit}".."${head_commit}" --format=%B)
 printf "History:\n---\n%s\n---\n" "$log"
 
 case "$log" in
-    *"#major"*) new=$(semver -i major "$tag");;
-    *"#minor"*) new=$(semver -i minor "$tag");;
-    *"#patch"*) new=$(semver -i patch "$tag");;
+    *"+major"*) new=$(semver -i major "$tag");;
+    *"+minor"*) new=$(semver -i minor "$tag");;
+    *"+patch"*) new=$(semver -i patch "$tag");;
     *)
-        echo "No git commit bump set! Exiting";
+        echo -e "Malformed commit message!";
+        echo -e "The message MUST container either:";
+        echo -e " '+major': Major bumps version: 1.0.0 -> 2.0.0"
+        echo -e " '+minor': Minor bumps version: 1.0.0 -> 1.1.0"
+        echo -e " '+patch': Patch/Revision bumps version: 1.0.0 -> 1.0.1";
         exit 1;;
 esac
 
@@ -98,37 +111,35 @@ setOutput "revision_version" ${revision_version}
 #####################
 # Step 3: Update the lazarus project/package with the new version
 #####################
-if [[ ! -f ${project_filename} ]]; then
-    echo "Project/Package file not found: ${project_filename}"
-    exit 1
-fi
+for filename in ${project_filenames}
+do
+    # Project paths
+    major_path='.CONFIG.ProjectOptions.VersionInfo.MajorVersionNr."+@Value"'
+    minor_path='.CONFIG.ProjectOptions.VersionInfo.MinorVersionNr."+@Value"'
+    revision_path='.CONFIG.ProjectOptions.VersionInfo.RevisionNr."+@Value"'
+    build_path='.CONFIG.ProjectOptions.VersionInfo.BuildNr."+@Value"'
 
-# Project paths
-major_path='.CONFIG.ProjectOptions.VersionInfo.MajorVersionNr."+@Value"'
-minor_path='.CONFIG.ProjectOptions.VersionInfo.MinorVersionNr."+@Value"'
-revision_path='.CONFIG.ProjectOptions.VersionInfo.RevisionNr."+@Value"'
-build_path='.CONFIG.ProjectOptions.VersionInfo.BuildNr."+@Value"'
 
-# IS this a project or packages
-out=$(yq e -p xml -o xml '.CONFIG.ProjectOptions' ${project_filename})
-if [[ $out == "null" ]]
-then
-    # Package paths
-    major_path='.CONFIG.Package.Version."+@Major"'
-    minor_path='.CONFIG.Package.Version."+@Minor"'
-    revision_path='.CONFIG.Package.Version."+@Release"'
-    build_path='.CONFIG.Package.Version."+@Build"'
-fi
+    # IS this a project or packages
+    out=$(yq e -p xml -o xml '.CONFIG.ProjectOptions' ${filename})
+    if [[ $out == "null" ]]
+    then
+        # Package paths
+        major_path='.CONFIG.Package.Version."+@Major"'
+        minor_path='.CONFIG.Package.Version."+@Minor"'
+        revision_path='.CONFIG.Package.Version."+@Release"'
+        build_path='.CONFIG.Package.Version."+@Build"'
+    fi
 
-# Set major version:
-yq e -p xml -o xml -i "$major_path = $major_version" $project_filename
-# Set minor version:
-yq e -p xml -o xml -i "$minor_path = $minor_version" $project_filename
-# Set revision version:
-yq e -p xml -o xml -i "$revision_path = $revision_version" $project_filename
-# Set build numberor :
-yq e -p xml -o xml -i "$build_path = $build_number" $project_filename
-
+    # Set major version:
+    yq e -p xml -o xml -i "$major_path = $major_version" $filename
+    # Set minor version:
+    yq e -p xml -o xml -i "$minor_path = $minor_version" $filename
+    # Set revision version:
+    yq e -p xml -o xml -i "$revision_path = $revision_version" $filename
+    # Set build numberor :
+    yq e -p xml -o xml -i "$build_path = $build_number" $filename
+done
 
 #####################
 # Step 4: Commit (amend) the changes back to the repo
