@@ -2,9 +2,12 @@
 
 set -eo pipefail
 
+setOutput() {
+    echo "${1}=${2}" >> "${GITHUB_OUTPUT}"
+}
+
 # config
 project_filename=${PROJECT_FILENAME:-"project1.lpi"}
-pom_files=${POM_FILES:-"pom.xml"}
 github_token=${GITHUB_TOKEN}
 dryrun=${DRY_RUN:-false}
 verbose=${VERBOSE:-false}
@@ -37,9 +40,8 @@ fi
 # 1: Get the latest git tag
 # 2: based on the commit message we bump the version of either patch, minor or major.
 # 3: Update the lazarus project/package with the new version
-# 4: Update the pom file(s) with the new version
-# 5: Commit (amend) the changes back to the repo
-# 6: Tag the new commit (from 3) with the updated version (from 1)
+# 4: Commit (amend) the changes back to the repo
+# 5: Tag the new commit (from 3) with the updated version (from 1)
 
 #####################
 ## Step 1: Get the latest git tag
@@ -88,6 +90,10 @@ minor_version=${BASH_REMATCH[2]}
 revision_version=${BASH_REMATCH[3]}
 build_number="0"
 
+setOutput "new_version" ${new}
+setOutput "major_version" ${major_version}
+setOutput "minor_version" ${minor_version}
+setOutput "revision_version" ${revision_version}
 
 #####################
 # Step 3: Update the lazarus project/package with the new version
@@ -125,16 +131,7 @@ yq e -p xml -o xml -i "$build_path = $build_number" $project_filename
 
 
 #####################
-# Step 4: Update the pom file(s)
-#####################
-for file in ${pom_files}
-do
-    mvn versions:set -DnewVersion=${new} -f ${file}
-done
-
-
-#####################
-# Step 5: Commit (amend) the changes back to the repo
+# Step 4: Commit (amend) the changes back to the repo
 #####################
 
 # Only do these steps if we really mean it :)
@@ -149,7 +146,7 @@ git commit --amend -a -m "${log}" -m "Automatically bumped version: ${new}"
 git push --force-with-lease origin ${branch}
 
 #####################
-# Step 6: Tag commit
+# Step 5: Tag commit
 #####################
 git tag -f "v${new}"
 git push --tags
